@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN /opt/conda/bin/pip install demucs && \
     git clone https://github.com/ysharma3501/LavaSR.git /tmp/lavasr && \
     /opt/conda/bin/pip install /tmp/lavasr && \
-    ln -sf /opt/conda/lib/python3.12/site-packages/LavaSR /opt/conda/lib/python3.12/site-packages/lavasr
+    # Find where LavaSR was installed and create case-insensitive symlink
+    find /opt/conda/lib -name "LavaSR" -type d 2>/dev/null | head -1 | xargs -I{} ln -sf {} /opt/conda/lib/python3.12/site-packages/lavasr
 
 WORKDIR /workspace
