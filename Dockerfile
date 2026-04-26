@@ -9,15 +9,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # SSH daemon requirements
 RUN mkdir -p /run/sshd && chmod 755 /run/sshd
 
-# Pre-authorize SSH keys at build time (Vast.ai injects keys via startup script too,
-# but having them at build time avoids any startup timing issues)
+# Pre-authorize SSH keys at build time
 RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
-# Install LavaSR + Demucs
+# Install LavaSR + Demucs + fix symlink (all in one RUN to share context)
 RUN pip install demucs && \
     git clone https://github.com/ysharma3501/LavaSR.git /tmp/lavasr && \
     pip install /tmp/lavasr && \
-    ln -sf /usr/local/lib/python3.12/dist-packages/LavaSR /usr/local/lib/python3.12/dist-packages/lavasr
+    PIP_PATH=$(pip show lavasr 2>/dev/null | grep "Location:" | cut -d' ' -f2) && \
+    echo "LavaSR installed at: $PIP_PATH" && \
+    if [ -n "$PIP_PATH" ] && [ -d "$PIP_PATH/LavaSR" ]; then \
+        ln -sf "$PIP_PATH/LavaSR" "$PIP_PATH/lavasr" && echo "Symlink created"; \
+    else \
+        find /usr /opt /root -name "LavaSR" -type d 2>/dev/null | while read d; do \
+            PARENT=$(dirname "$d"); \
+            ln -sf "$d" "$PARENT/lavasr" 2>/dev/null && echo "Symlink created at $PARENT/lavasr" && break; \
+        done; \
+    fi || echo "Symlink fix skipped"
 
 WORKDIR /workspace
 
