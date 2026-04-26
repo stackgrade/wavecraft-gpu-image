@@ -1,8 +1,9 @@
 FROM pytorch/pytorch:latest
 
-# Install SSH server + utilities
+# Install SSH server + git (needed for cloning LavaSR)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # SSH daemon requirements
